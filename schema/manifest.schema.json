@@ -1,16 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
-  "title": "office-cockpit action manifest (occ-actions/1)",
-  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors.",
+  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.2.0/schema/manifest.schema.json",
+  "title": "office-cockpit action manifest (occ-actions/1, schema v0.2.0)",
+  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors. Since v0.2.0 an action may run on one of the user's nodes (executor: node): one ES module under scripts/ run in QuickJS with ctx v1, its SHA-256 in the manifest; such an action has no steps. A manifest without executor is a plane action, exactly as in v0.1.0.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "id",
     "title",
     "group",
-    "appliesTo",
-    "steps"
+    "appliesTo"
   ],
   "properties": {
     "$schema": {
@@ -456,6 +455,167 @@
           }
         ]
       }
+    },
+    "executor": {
+      "enum": [
+        "plane",
+        "node"
+      ],
+      "default": "plane",
+      "description": "plane: the steps run on the plane (v0.1.0). node: the script runs on a node the user picks, which fetches it at the same commit and checks its hash."
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^scripts/[A-Za-z0-9_][A-Za-z0-9._-]{0,96}\\.js$",
+          "description": "One file under scripts/, at most 256 KiB."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "The SHA-256 of the script's bytes at the same commit (occ actions hash <dir> --write)."
+        }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "github.read",
+          "github.write",
+          "git.checkout",
+          "agent.start",
+          "agent.run"
+        ]
+      },
+      "description": "The ctx capabilities the script may call; a node asks its owner before new ones run."
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "occ": {
+          "type": "string",
+          "description": "A semver range over the node's occ version, such as >=0.4.0."
+        },
+        "ctx": {
+          "const": 1
+        },
+        "tools": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "enum": [
+              "gh",
+              "claude",
+              "herdr",
+              "tmux",
+              "codex"
+            ]
+          }
+        },
+        "skills": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Claude Code skills or commands by full name (plugin:name)."
+        },
+        "mcp": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "checkout": {
+          "enum": [
+            "required",
+            "preferred",
+            "none"
+          ]
+        },
+        "github": {
+          "const": "item"
+        }
+      }
+    },
+    "timeoutSeconds": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 3600,
+      "default": 600
     }
+  },
+  "if": {
+    "properties": {
+      "executor": {
+        "const": "node"
+      }
+    },
+    "required": [
+      "executor"
+    ]
+  },
+  "then": {
+    "required": [
+      "script",
+      "permissions"
+    ],
+    "not": {
+      "required": [
+        "steps"
+      ]
+    }
+  },
+  "else": {
+    "required": [
+      "steps"
+    ],
+    "allOf": [
+      {
+        "not": {
+          "required": [
+            "script"
+          ]
+        }
+      },
+      {
+        "not": {
+          "required": [
+            "permissions"
+          ]
+        }
+      },
+      {
+        "not": {
+          "required": [
+            "requires"
+          ]
+        }
+      },
+      {
+        "not": {
+          "required": [
+            "timeoutSeconds"
+          ]
+        }
+      }
+    ]
   }
 }

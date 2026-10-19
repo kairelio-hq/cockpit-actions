@@ -15,11 +15,11 @@ manifest names where it applies, an optional form, and steps made of the plane's
 
 ## Using it
 
-In the cockpit, Settings → Actions → Add library: `kairelio-hq/cockpit-actions`, ref `^0.1` (the newest 0.1.x
+In the cockpit, Settings → Actions → Add library: `kairelio-hq/cockpit-actions`, ref `^0.2` (the newest 0.1.x
 release tag), no connection needed (it is public). Turn it on for a space. Or with occ:
 
 ```sh
-occ actions libraries add kairelio-hq/cockpit-actions --ref='^0.1'
+occ actions libraries add kairelio-hq/cockpit-actions --ref='^0.2'
 occ actions libraries enable kairelio-hq/cockpit-actions --space=<space>
 ```
 
@@ -37,6 +37,18 @@ occ actions libraries enable kairelio-hq/cockpit-actions --space=<space>
   `ref`, `key`, `number`, `repository`, `title`, `url`, `branch`) and `{me.email}` / `{me.name}`.
 - Every operation writes, so every action is confirmed.
 
-Release by tagging `vX.Y.Z`; users on a range (`^0.1`) move with the next Update or daily.
+### Node actions (schema v0.2.0)
+
+An action may run on one of the user's nodes instead of the plane: `executor: "node"`, a `script`
+(`{ "path": "scripts/<id>.js", "sha256": "<64 hex>" }`, one ES module exporting `handle(ctx)`, at most 256 KiB),
+`permissions` (the `ctx` calls it may make: `github.read`, `github.write`, `git.checkout`, `agent.start`,
+`agent.run`), `requires` (`occ`, `ctx`, `tools`, `skills`, `mcp`, `checkout`, `github`) and `timeoutSeconds`; no
+`steps`. The plane never runs the script; a node fetches it at the pinned commit with its own `gh`, checks the
+hash, and runs it only if it trusts the library (`occ actions add <owner/repo>[@<range>]` on that node). Keep the
+hash current with `occ actions hash . --write`. A manifest without `executor` is a v0.1.0 plane action, unchanged.
+
+This library has no node actions; `occ init` offers to trust it at `always` for `^0.2`.
+
+Release by tagging `vX.Y.Z`; users on a range (`^0.2`) move with the next Update or daily.
 
 The contract is office-cockpit's `doc/design/contract/actions.md`.

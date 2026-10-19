@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "id": "merge",
+  "title": "Merge",
+  "group": "github",
+  "description": "Merge, after asking GitHub whether it would: a pull request that cannot merge says why before anything is confirmed.",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "pr"
+      },
+      {
+        "field": "state",
+        "is": "open"
+      },
+      {
+        "field": "draft",
+        "is": false
+      }
+    ]
+  },
+  "mnemonic": "m",
+  "primary": {
+    "when": {
+      "all": [
+        {
+          "field": "author",
+          "is": "{me}"
+        },
+        {
+          "field": "verdict",
+          "is": "ready"
+        }
+      ]
+    },
+    "rank": 20
+  },
+  "steps": [
+    {
+      "op": "merge",
+      "with": {
+        "method": "merge"
+      }
+    }
+  ]
+}

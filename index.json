@@ -1,0 +1,12 @@
+{
+  "format": "occ-actions/1",
+  "name": "cockpit-actions",
+  "actions": [
+    "approve",
+    "force-approve",
+    "merge",
+    "mark-draft",
+    "mark-ready",
+    "transition"
+  ]
+}

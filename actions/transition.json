@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "id": "transition",
+  "title": "Transition…",
+  "group": "jira",
+  "description": "Move the Jira issue to another status, through the transitions Jira offers it now.",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "ticket"
+      },
+      {
+        "field": "provider",
+        "is": "jira"
+      }
+    ]
+  },
+  "form": [
+    {
+      "key": "status",
+      "label": "Status",
+      "kind": "select",
+      "optionsFrom": "jira-transitions",
+      "required": true
+    }
+  ],
+  "mnemonic": "t",
+  "primary": {
+    "when": {
+      "field": "statusCategory",
+      "not": "done"
+    },
+    "rank": 40
+  },
+  "steps": [
+    {
+      "op": "jira-transition",
+      "with": {
+        "to": "{form.status}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "title": "office-cockpit action manifest (occ-actions/1)",
+  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "group",
+    "appliesTo",
+    "steps"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,47}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "group": {
+      "enum": [
+        "copy",
+        "github",
+        "jira",
+        "agent"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "appliesTo": {
+      "description": "A view condition (office-cockpit contract views.md, Conditions): { all: [...] }, { any: [...] }, { not: c }, { kind: pr|ticket }, or { field, <operator>: value }. The plane checks fields and operators.",
+      "type": "object",
+      "minProperties": 1
+    },
+    "form": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "label"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "enum": [
+              "text",
+              "select",
+              "multiselect",
+              "checkbox"
+            ],
+            "default": "text"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "value"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "optionsFrom": {
+            "enum": [
+              "linked-tickets",
+              "jira-transitions"
+            ]
+          },
+          "default": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "prefill": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "bodyField"
+            ],
+            "properties": {
+              "bodyField": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9 _-]{0,39}$"
+              }
+            }
+          },
+          "placeholder": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "help": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "mnemonic": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9]$"
+    },
+    "primary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "when": {
+          "description": "A view condition (office-cockpit contract views.md, Conditions): { all: [...] }, { any: [...] }, { not: c }, { kind: pr|ticket }, or { field, <operator>: value }. The plane checks fields and operators.",
+          "type": "object",
+          "minProperties": 1
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        }
+      }
+    },
+    "confirm": {
+      "const": true,
+      "description": "Every operation writes, so an action is always confirmed."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "const": "approve"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "maxLength": 65536
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "const": "merge"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "enum": [
+                      "merge",
+                      "squash",
+                      "rebase"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "const": "convert-to-draft"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "maxProperties": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "const": "mark-ready"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "maxProperties": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "with"
+            ],
+            "properties": {
+              "op": {
+                "const": "add-labels"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "labels"
+                ],
+                "properties": {
+                  "labels": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "with"
+            ],
+            "properties": {
+              "op": {
+                "const": "remove-labels"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "labels"
+                ],
+                "properties": {
+                  "labels": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "with"
+            ],
+            "properties": {
+              "op": {
+                "const": "comment"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "body"
+                ],
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 65536
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "with"
+            ],
+            "properties": {
+              "op": {
+                "const": "jira-transition"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "to"
+                ],
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "with"
+            ],
+            "properties": {
+              "op": {
+                "const": "set-pr-body-fields"
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "heading",
+                  "fields"
+                ],
+                "properties": {
+                  "heading": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "fields": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "maxProperties": 20,
+                    "propertyNames": {
+                      "pattern": "^[A-Za-z][A-Za-z0-9 _-]{0,39}$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 2000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

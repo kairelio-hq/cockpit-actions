@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "id": "mark-ready",
+  "title": "Mark ready for review",
+  "group": "github",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "pr"
+      },
+      {
+        "field": "state",
+        "is": "open"
+      },
+      {
+        "field": "draft",
+        "is": true
+      },
+      {
+        "field": "author",
+        "is": "{me}"
+      }
+    ]
+  },
+  "mnemonic": "r",
+  "primary": {
+    "when": {
+      "field": "author",
+      "is": "{me}"
+    },
+    "rank": 30
+  },
+  "steps": [
+    {
+      "op": "mark-ready"
+    }
+  ]
+}

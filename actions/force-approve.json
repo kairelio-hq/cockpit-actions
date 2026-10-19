@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "id": "force-approve",
+  "title": "Force approve",
+  "group": "github",
+  "description": "Approve without reading it. Kept apart from Approve: the same to GitHub, a different thing to a person, and the menu entry is the record of which one you meant.",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "pr"
+      },
+      {
+        "field": "state",
+        "is": "open"
+      },
+      {
+        "not": {
+          "field": "author",
+          "is": "{me}"
+        }
+      }
+    ]
+  },
+  "mnemonic": "A",
+  "steps": [
+    {
+      "op": "approve",
+      "with": {
+        "body": "Approved without review."
+      }
+    }
+  ]
+}

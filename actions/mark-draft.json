@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "id": "mark-draft",
+  "title": "Mark as draft",
+  "group": "github",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "pr"
+      },
+      {
+        "field": "state",
+        "is": "open"
+      },
+      {
+        "field": "draft",
+        "is": false
+      },
+      {
+        "field": "author",
+        "is": "{me}"
+      }
+    ]
+  },
+  "mnemonic": "d",
+  "steps": [
+    {
+      "op": "convert-to-draft"
+    }
+  ]
+}

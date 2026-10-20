@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.1 (2026-10-20)
+
+- `resolve-conflict` fails closed (security review): it is greyed when the plane cannot tell whether the pull request
+  comes from a fork ("Can't tell whether this PR comes from a fork"), and its script refuses unless the snapshot says
+  `fork: false` with a head repository equal to the item's, the head branch is neither the base branch nor the
+  repository's default branch, and GitHub, asked just before the agent starts (`isCrossRepository`, the head
+  repository, the branches), agrees. Any of these unknown, or GitHub not answering, is a refusal. The prompt
+  (`resolve-conflict/3`) has the agent check `isCrossRepository` again before it pushes. It now also needs
+  `github.read` (a node that trusts it asks once for the new permission).
+
 ## v0.4.0 (2026-10-20)
 
 - `retry-failed-actions` (Retry failed actions, `R`): re-runs the failed jobs of the GitHub Actions runs that failed

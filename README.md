@@ -13,7 +13,7 @@ manifest names where it applies, an optional form, and steps made of the plane's
 | `mark-ready` | marks ready for review | your draft PRs | `r` |
 | `transition` | moves an issue to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason) | Jira and GitHub issues (primary while not done) | `t` |
 | `retry-failed-actions` | re-runs the failed jobs of the GitHub Actions runs that failed on the head commit (the latest run of each workflow); the confirmation lists them; other apps' checks are named as skipped. The connection needs Actions write (a classic token: `repo`) | open PRs whose checks fail (primary when yours, below approve and merge) | `R` |
-| `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork | `C` |
+| `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork, or when it cannot tell (it fails closed) | `C` |
 
 ## Using it
 
@@ -78,14 +78,14 @@ and v0.2.0 manifests keep working unchanged.
   an office-cockpit plane from 2026-10-20 on; an older plane lists these two manifests with their errors.
 
 `resolve-conflict` is this library's first node action. Its prompt is versioned in the script (`PROMPT_VERSION`,
-now `resolve-conflict/2`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`
+now `resolve-conflict/3`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`
 (rewrites the PR's history; `git push --force-with-lease` to the PR's branch only, never a bare `--force`). The agent
 creates the worktree and removes it (`git worktree remove`, `git worktree prune`, and its temporary branch) once the
 push went; when it stops to ask, it keeps the worktree, says where it is, and removes it once done after the answer.
 
 `occ init` (an occ released after 0.5.1) offers to trust this library at `always` for `^0.4`: its releases in range run without
-asking, but new permissions still ask, so the first run of `resolve-conflict` on a node asks once for `git.checkout`,
-`agent.start` and `github.write`.
+asking, but new permissions still ask, so the first run of `resolve-conflict` on a node asks once for `github.read`,
+`git.checkout`, `agent.start` and `github.write`.
 
 Release by tagging `vX.Y.Z`; users on a range (`^0.3`) move with the next Update or daily.
 

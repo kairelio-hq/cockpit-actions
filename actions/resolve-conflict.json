@@ -22,6 +22,23 @@
   "unavailableWhen": [
     {
       "when": {
+        "not": {
+          "any": [
+            {
+              "field": "fork",
+              "is": true
+            },
+            {
+              "field": "fork",
+              "is": false
+            }
+          ]
+        }
+      },
+      "reason": "Can't tell whether this PR comes from a fork"
+    },
+    {
+      "when": {
         "field": "fork",
         "is": true
       },
@@ -52,9 +69,10 @@
   "executor": "node",
   "script": {
     "path": "scripts/resolve-conflict.js",
-    "sha256": "01d2fb35936a9d29e29f11a2d74193341016f1f12e0da690bdc6cc41aaeeb60e"
+    "sha256": "43323bc07b19e85fd133ab47ef1edde70d17e6e5638132b67bdc8602278bb7fd"
   },
   "permissions": [
+    "github.read",
     "git.checkout",
     "agent.start",
     "github.write"

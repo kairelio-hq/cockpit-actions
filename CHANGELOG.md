@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.0 (unreleased)
+
+- Schema v0.5.0: **library variables**. A manifest's `variables` (1-20 `{ id, label, type: string|email|number|enum|user,
+  scope?: space, default?, help?, values? }`) declares values the user keeps per space in office-cockpit (Settings →
+  Actions → <library> → Variables); a form field defaults to one with `{{var.<id>}}` (the form offers Remember as
+  default), its help links to it with `{{settings:var.<id>}}`, a step uses `{var.<id>}`, a node action's script reads
+  `ctx.vars.<id>`. A default may name `{me.email}`, `{me.name}`, `{connection.jira.email}`,
+  `{connection.github.login}`. Values are not secrets (no secret type). v0.1.0-v0.4.x manifests stay valid.
+
 ## v0.4.1 (2026-10-20)
 
 - `resolve-conflict` fails closed (security review): it is greyed when the plane cannot tell whether the pull request

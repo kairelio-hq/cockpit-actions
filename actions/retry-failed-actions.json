@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.4.0/schema/manifest.schema.json",
+  "id": "retry-failed-actions",
+  "title": "Retry failed actions",
+  "group": "github",
+  "description": "Re-run the failed jobs of the GitHub Actions runs that failed on the pull request's head commit (the latest run of each workflow). Other apps' checks cannot be re-run from here and are listed as skipped. The connection needs Actions write access (a classic token: repo).",
+  "appliesTo": {
+    "all": [
+      {
+        "kind": "pr"
+      },
+      {
+        "field": "state",
+        "is": "open"
+      },
+      {
+        "field": "checks",
+        "is": "failing"
+      }
+    ]
+  },
+  "mnemonic": "R",
+  "primary": {
+    "when": {
+      "all": [
+        {
+          "field": "author",
+          "is": "{me}"
+        },
+        {
+          "field": "checks",
+          "is": "failing"
+        }
+      ]
+    },
+    "rank": 25
+  },
+  "steps": [
+    {
+      "op": "rerun-failed-checks"
+    }
+  ]
+}

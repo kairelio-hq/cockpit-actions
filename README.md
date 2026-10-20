@@ -12,14 +12,16 @@ manifest names where it applies, an optional form, and steps made of the plane's
 | `mark-draft` | converts to draft | your open PRs | `d` |
 | `mark-ready` | marks ready for review | your draft PRs | `r` |
 | `transition` | moves an issue to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason) | Jira and GitHub issues (primary while not done) | `t` |
+| `retry-failed-actions` | re-runs the failed jobs of the GitHub Actions runs that failed on the head commit (the latest run of each workflow); the confirmation lists them; other apps' checks are named as skipped. The connection needs Actions write (a classic token: `repo`) | open PRs whose checks fail (primary when yours, below approve and merge) | `R` |
+| `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork | `C` |
 
 ## Using it
 
-In the cockpit, Settings → Actions → Add library: `kairelio-hq/cockpit-actions`, ref `^0.3` (the newest 0.3.x
+In the cockpit, Settings → Actions → Add library: `kairelio-hq/cockpit-actions`, ref `^0.4` (the newest 0.4.x
 release tag), no connection needed (it is public). Turn it on for a space. Or with occ:
 
 ```sh
-occ actions libraries add kairelio-hq/cockpit-actions --ref='^0.3'
+occ actions libraries add kairelio-hq/cockpit-actions --ref='^0.4'
 occ actions libraries enable kairelio-hq/cockpit-actions --space=<space>
 ```
 
@@ -63,7 +65,27 @@ to set it in Jira or use an agent transition.
 `jira-transition` and `optionsFrom: jira-transitions` are the v0.1.0 names, still valid for one version: v0.1.0
 and v0.2.0 manifests keep working unchanged.
 
-This library has no node actions; `occ init` offers to trust it at `always` for `^0.3`.
+### Retry and greyed actions (schema v0.4.0)
+
+- `rerun-failed-checks` (GitHub pull requests): re-runs the failed jobs (`failure`, `timed_out`, `cancelled`,
+  `startup_failure`) of the latest GitHub Actions run of each workflow on the head commit. Preparing it lists the
+  runs it will retry (the confirmation's line) and refuses when there is none; checks of other apps are listed as
+  skipped, "not a GitHub Actions run". A 403 says the token needs Actions write.
+- `unavailableWhen`: 1-5 `{ when, reason }`. An applicable action whose rule holds on the item is listed greyed with
+  the reason and refused when prepared or run (`resolve-conflict`: a pull request from a fork).
+- View condition fields for `appliesTo`, `primary.when` and `unavailableWhen`: `checks` (`passing`, `failing`,
+  `pending`, `none`), `mergeable` (`clean`, `conflicting`, `blocked`, `unknown`), `fork` (true or false). They need
+  an office-cockpit plane from 2026-10-20 on; an older plane lists these two manifests with their errors.
+
+`resolve-conflict` is this library's first node action. Its prompt is versioned in the script (`PROMPT_VERSION`,
+now `resolve-conflict/2`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`
+(rewrites the PR's history; `git push --force-with-lease` to the PR's branch only, never a bare `--force`). The agent
+creates the worktree and removes it (`git worktree remove`, `git worktree prune`, and its temporary branch) once the
+push went; when it stops to ask, it keeps the worktree, says where it is, and removes it once done after the answer.
+
+`occ init` (an occ released after 0.5.1) offers to trust this library at `always` for `^0.4`: its releases in range run without
+asking, but new permissions still ask, so the first run of `resolve-conflict` on a node asks once for `git.checkout`,
+`agent.start` and `github.write`.
 
 Release by tagging `vX.Y.Z`; users on a range (`^0.3`) move with the next Update or daily.
 

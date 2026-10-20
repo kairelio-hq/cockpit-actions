@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.3.0/schema/manifest.schema.json",
-  "title": "office-cockpit action manifest (occ-actions/1, schema v0.3.0)",
-  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors. Since v0.2.0 an action may run on one of the user's nodes (executor: node): one ES module under scripts/ run in QuickJS with ctx v1, its SHA-256 in the manifest; such an action has no steps. A manifest without executor is a plane action, exactly as in v0.1.0. Since v0.3.0 operations are provider-neutral and run on the item's connector: transition { to, fields? } moves a Jira issue through its workflow or opens and closes a GitHub issue, and optionsFrom: transitions lists where the item can move now with the fields each move asks for (a run answers them in form.fields, so fields is not a form key). jira-transition and jira-transitions are their deprecated v0.1.0 names, still valid.",
+  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.4.0/schema/manifest.schema.json",
+  "title": "office-cockpit action manifest (occ-actions/1, schema v0.4.0)",
+  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors. Since v0.2.0 an action may run on one of the user's nodes (executor: node): one ES module under scripts/ run in QuickJS with ctx v1, its SHA-256 in the manifest; such an action has no steps. A manifest without executor is a plane action, exactly as in v0.1.0. Since v0.3.0 operations are provider-neutral and run on the item's connector: transition { to, fields? } moves a Jira issue through its workflow or opens and closes a GitHub issue, and optionsFrom: transitions lists where the item can move now with the fields each move asks for (a run answers them in form.fields, so fields is not a form key). jira-transition and jira-transitions are their deprecated v0.1.0 names, still valid. Since v0.4.0: the rerun-failed-checks operation (re-runs the failed jobs of the GitHub Actions runs that failed on a pull request's head commit; preparing it lists the runs), unavailableWhen (rules that grey an applicable action out with a reason, such as a pull request from a fork), and the view condition fields checks, mergeable and fork. Earlier manifests stay valid.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -175,6 +175,32 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 99
+        }
+      }
+    },
+    "unavailableWhen": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "Since v0.4.0. Rules that grey an applicable action out on an item: listed with the reason, refused when prepared or run. The first rule whose when holds gives the reason.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "when",
+          "reason"
+        ],
+        "properties": {
+          "when": {
+            "description": "A view condition (office-cockpit contract views.md, Conditions): { all: [...] }, { any: [...] }, { not: c }, { kind: pr|ticket }, or { field, <operator>: value }. The plane checks fields and operators.",
+            "type": "object",
+            "minProperties": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
         }
       }
     },
@@ -544,6 +570,27 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "const": "rerun-failed-checks",
+                "description": "Since v0.4.0. Re-runs the failed jobs of the GitHub Actions runs that failed (failure, timed_out, cancelled, startup_failure) on a pull request's head commit, the latest run of each workflow; other apps' checks are listed as skipped. Preparing it lists the runs it will retry, or refuses when there is none."
+              },
+              "if": {
+                "type": "string",
+                "pattern": "^form\\.[a-z][a-z0-9_]*$"
+              },
+              "with": {
+                "type": "object",
+                "maxProperties": 0
               }
             }
           }

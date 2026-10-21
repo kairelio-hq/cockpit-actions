@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.2 (unreleased)
+
+- `approve` is **primary once you have reviewed the pull request and your latest review is not an approval**, as well as
+  while your review is asked: `reviewStatus in [requested, approved-ready, chg-req, commented]`. Any review counts
+  (COMMENTED, CHANGES_REQUESTED, a dismissed one), including the COMMENT reviews your agent posts under your account.
+  GitHub drops you from the requested reviewers once you review, so `requestedReviewers any {me}` stopped holding
+  exactly when approving was the thing left (hardcoretech/fms#20876, 2026-10-21). Never once your latest review is
+  an approval (`reviewStatus` `approved`) unless your review is asked again; never on your own pull request
+  (`appliesTo`, and `reviewStatus` is null there). Failing checks do not matter: GitHub takes an approval either way.
+  `appliesTo` is unchanged (open pull requests not yours). Schema v0.6.2 documents the condition fields
+  `reviewStatus` and `reviewStatus.tone`, which office-cockpit has read since 2026-10-20 (every plane that reads
+  v0.6.0's `agents` has them). v0.1.0-v0.6.1 manifests stay valid.
+
 ## v0.6.1 (unreleased)
 
 - `transition` passes the picked move as **`transitionId`** (`{form.status}`), not `to`. Two Jira transitions may lead

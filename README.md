@@ -6,7 +6,7 @@ manifest names where it applies, an optional form, and steps made of the plane's
 
 | action | does | applies to | letter |
 |---|---|---|---|
-| `approve` | approves the pull request | open PRs not yours (primary while your review is asked) | `a` |
+| `approve` | approves the pull request | open PRs not yours (primary while your review is asked, and once you have reviewed until your latest review is an approval, whatever the checks say) | `a` |
 | `force-approve` | approves with "Approved without review." | open PRs not yours | `A` |
 | `merge` | merges, after asking GitHub whether it would (a refusal says why before anything is confirmed) | open, non-draft PRs (primary when yours and ready) | `m` |
 | `mark-draft` | converts to draft | your open PRs | `d` |
@@ -85,6 +85,16 @@ transitionId"). That plane also takes the id as `to`, so v0.6.0's `to: "{form.st
 - View condition fields for `appliesTo`, `primary.when` and `unavailableWhen`: `checks` (`passing`, `failing`,
   `pending`, `none`), `mergeable` (`clean`, `conflicting`, `blocked`, `unknown`), `fork` (true or false). They need
   an office-cockpit plane from 2026-10-20 on; an older plane lists these two manifests with their errors.
+- v0.6.2: `reviewStatus` (`requested`, `approved`, `approved-ready`, `chg-req`, `commented`) and `reviewStatus.tone`
+  (`mine`, `mine-ready`, `settled`, `theirs`): the viewer's own review of an open pull request they review and did not
+  write (null otherwise), computed for the user the actions are listed for, as in their views. Their latest review
+  decides it: `approved` (an approval), `chg-req`, `commented` (`approved-ready` when it is a COMMENT whose body opens
+  with 🤖 and says `Suggested verdict: APPROVE`: the agent posts as them and cannot approve), `requested` while their
+  review is asked or when their latest review was dismissed. GitHub removes a reviewer from the requested reviewers
+  once they review, so `requestedReviewers any {me}` no longer holds; `approve` is primary by
+  `reviewStatus in [requested, approved-ready, chg-req, commented]`, every value but `approved`. Needs an office-cockpit
+  plane from 2026-10-20 on (every plane that reads v0.6.0's `agents` has it); an older one lists `approve` with its
+  error.
 
 `resolve-conflict` is this library's first node action. Its prompt is versioned in the script (`PROMPT_VERSION`,
 now `resolve-conflict/3`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`

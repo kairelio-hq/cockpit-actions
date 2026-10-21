@@ -1,9 +1,9 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.1.0/schema/manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.6.2/schema/manifest.schema.json",
   "id": "approve",
   "title": "Approve",
   "group": "github",
-  "description": "Approve the pull request (a review with event APPROVE).",
+  "description": "Approve the pull request (a review with event APPROVE). Primary while your review is asked, and once you have reviewed it (any review, your agent's under your account included) until your latest review is an approval; failing checks or not.",
   "appliesTo": {
     "all": [
       {
@@ -24,8 +24,21 @@
   "mnemonic": "a",
   "primary": {
     "when": {
-      "field": "requestedReviewers",
-      "any": "{me}"
+      "any": [
+        {
+          "field": "requestedReviewers",
+          "any": "{me}"
+        },
+        {
+          "field": "reviewStatus",
+          "in": [
+            "requested",
+            "approved-ready",
+            "chg-req",
+            "commented"
+          ]
+        }
+      ]
     },
     "rank": 10
   },

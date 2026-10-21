@@ -78,7 +78,7 @@
     "github.write"
   ],
   "requires": {
-    "occ": ">=0.4.0",
+    "occ": ">=0.7.1",
     "ctx": 1,
     "tools": [
       "gh"

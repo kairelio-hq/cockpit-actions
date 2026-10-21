@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.3 (unreleased)
+
+- `resolve-conflict` requires **occ >=0.7.1** (was >=0.4.0). From occ 0.7.1 every session cockpit starts runs in the
+  background (`claude --bg` or the Codex daemon), named `occ-…`, and comes to a herdr/tmux tab or the Claude app only
+  when you open it. An older node would still open a herdr tab for this action on its own (2026-10-21).
+
 ## v0.6.2 (unreleased)
 
 - `approve` is **primary once you have reviewed the pull request and your latest review is not an approval**, as well as

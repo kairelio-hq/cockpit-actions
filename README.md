@@ -65,6 +65,15 @@ to set it in Jira or use an agent transition.
 `jira-transition` and `optionsFrom: jira-transitions` are the v0.1.0 names, still valid for one version: v0.1.0
 and v0.2.0 manifests keep working unchanged.
 
+**v0.6.1: the move by its id.** Two Jira transitions may lead to the same status ("Done (Deploy to Production)",
+"Done (Cancel the Work)"), with different screens and post-functions, so an option of `optionsFrom: transitions` holds
+the move's id (a Jira transition id; a GitHub issue's `open` or `closed`), labelled `<status> (<transition>)`, and
+`transition` takes it as `transitionId`: the plane posts exactly that transition, after checking Jira still offers it
+(else "that transition is no longer available"). `to` still names a status: one transition there is taken, several are
+refused as "ambiguous: choose a transition" rather than guessed. `transition` here passes `transitionId: "{form.status}"`;
+it needs an office-cockpit plane from 2026-10-21 on (an older one lists the manifest with an error, "unknown parameter
+transitionId"). That plane also takes the id as `to`, so v0.6.0's `to: "{form.status}"` picks the right transition on it.
+
 ### Retry and greyed actions (schema v0.4.0)
 
 - `rerun-failed-checks` (GitHub pull requests): re-runs the failed jobs (`failure`, `timed_out`, `cancelled`,

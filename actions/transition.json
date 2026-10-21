@@ -1,9 +1,9 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.3.0/schema/manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.6.1/schema/manifest.schema.json",
   "id": "transition",
   "title": "Transition…",
   "group": "jira",
-  "description": "Move the issue to another status: a Jira issue through the transitions Jira offers it now (with the fields the move asks for, such as Effort), a GitHub issue open or closed.",
+  "description": "Move the issue to another status: a Jira issue through the transition picked among those Jira offers it now (two may lead to the same status; each with the fields it asks for, such as Effort), a GitHub issue open or closed.",
   "appliesTo": {
     "kind": "ticket"
   },
@@ -28,7 +28,7 @@
     {
       "op": "transition",
       "with": {
-        "to": "{form.status}"
+        "transitionId": "{form.status}"
       }
     }
   ]

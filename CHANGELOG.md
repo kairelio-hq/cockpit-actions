@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.1 (unreleased)
+
+- `transition` passes the picked move as **`transitionId`** (`{form.status}`), not `to`. Two Jira transitions may lead
+  to the same status ("Done (Deploy to Production)", "Done (Cancel the Work)"); the form's options are keyed by the
+  transition id, and `to` alone named only the status, so the plane could post a different transition than the one
+  picked (and the dialog could not select the first of two). Schema v0.6.1: `transition`'s `with` takes `transitionId`
+  or `to` (at least one). Needs an office-cockpit plane from 2026-10-21 on; tag after that plane is deployed (an older
+  plane refuses `transitionId` and lists `transition` with its error). v0.1.0-v0.6.0 manifests stay valid.
+
 ## v0.6.0 (unreleased)
 
 - Schema v0.6.0: **agents**. A node action may declare the agents it runs with: `"agents": ["claude", "codex"]`, or per

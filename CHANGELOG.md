@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.0 (unreleased)
+
+- Schema v0.6.0: **agents**. A node action may declare the agents it runs with: `"agents": ["claude", "codex"]`, or per
+  agent `{ "claude": { "requires": { "skills", "mcp" }, "prompt"? }, "codex": { … } }`. Absent: Claude only, as before
+  (a prompt may rely on Claude's slash commands, skills or `--settings` hooks). office-cockpit (occ 0.7.0) offers each
+  node × agent in the action's Run on, each with its reason when it cannot; the script reads `ctx.agent.kind` (and
+  `ctx.agent.prompt`). The top-level `requires.skills` and `requires.mcp` stay Claude's. v0.1.0-v0.5.x manifests stay
+  valid.
+- `resolve-conflict` runs with **Claude or Codex**: its prompt (`resolve-conflict/3`) is plain git and gh work, nothing
+  Claude-only; Codex needs no skill. `requires.tools` drops `claude` (each agent's tool is implied by `agent.start`).
+
 ## v0.5.0 (unreleased)
 
 - Schema v0.5.0: **library variables**. A manifest's `variables` (1-20 `{ id, label, type: string|email|number|enum|user,

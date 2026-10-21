@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.4.0/schema/manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.6.0/schema/manifest.schema.json",
   "id": "resolve-conflict",
   "title": "(agent) Resolve conflict",
   "group": "agent",
@@ -81,11 +81,14 @@
     "occ": ">=0.4.0",
     "ctx": 1,
     "tools": [
-      "gh",
-      "claude"
+      "gh"
     ],
     "checkout": "required",
     "github": "item"
   },
-  "timeoutSeconds": 120
+  "timeoutSeconds": 120,
+  "agents": [
+    "claude",
+    "codex"
+  ]
 }

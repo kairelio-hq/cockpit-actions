@@ -11,7 +11,7 @@ manifest names where it applies, an optional form, and steps made of the plane's
 | `merge` | merges, after asking GitHub whether it would (a refusal says why before anything is confirmed) | open, non-draft PRs (primary when yours and ready) | `m` |
 | `mark-draft` | converts to draft | your open PRs | `d` |
 | `mark-ready` | marks ready for review | your draft PRs | `r` |
-| `transition` | moves an issue to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason) | Jira and GitHub issues (primary while not done) | `t` |
+| `transition` | moves an item to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason), a GitHub issue or pull request to another status of a project it is in (options grouped by project) | Jira and GitHub issues (primary while not done); pull requests in a GitHub project | `t` |
 | `retry-failed-actions` | re-runs the failed jobs of the GitHub Actions runs that failed on the head commit (the latest run of each workflow); the confirmation lists them; other apps' checks are named as skipped. The connection needs Actions write (a classic token: `repo`) | open PRs whose checks fail (primary when yours, below approve and merge) | `R` |
 | `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork, or when it cannot tell (it fails closed) | `C` |
 
@@ -95,6 +95,19 @@ transitionId"). That plane also takes the id as `to`, so v0.6.0's `to: "{form.st
   `reviewStatus in [requested, approved-ready, chg-req, commented]`, every value but `approved`. Needs an office-cockpit
   plane from 2026-10-20 on (every plane that reads v0.6.0's `agents` has it); an older one lists `approve` with its
   error.
+
+### GitHub project status (schema v0.7.0)
+
+`transition` moves a GitHub issue or pull request to another status of a GitHub project it is in. `optionsFrom:
+transitions` lists the issue's own move (open or closed, grouped `Issue`), then each project's statuses grouped by
+project (`group: { key: "project:<owner>/<number>", label: <title> }`, projects by title), the current status greyed
+("it is Todo now"). An option's value is `project:<project id>:<option id>`, passed as `transitionId`; the plane reads
+the item's projects fresh, refuses a project it left or an option the project no longer has, writes nothing when it
+is already there, and else sets the project's status field (the single-select the user picked for that project in
+Settings, else `Status`) with GitHub's `updateProjectV2ItemFieldValue`. The connection needs the `project` scope
+(classic tokens and OAuth) or Projects write (fine-grained). A pull request moves between project statuses only:
+`appliesTo` lists `transition` on one in a project (`projects exists`), and it is never primary there. View condition
+fields since v0.7.0: `projects`, `projectStatus`, `projectStatusCategory`. Needs an office-cockpit plane 0.4.0.
 
 `resolve-conflict` is this library's first node action. Its prompt is versioned in the script (`PROMPT_VERSION`,
 now `resolve-conflict/3`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`

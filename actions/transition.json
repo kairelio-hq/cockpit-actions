@@ -1,11 +1,26 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.6.1/schema/manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.7.0/schema/manifest.schema.json",
   "id": "transition",
   "title": "Transition…",
   "group": "jira",
-  "description": "Move the issue to another status: a Jira issue through the transition picked among those Jira offers it now (two may lead to the same status; each with the fields it asks for, such as Effort), a GitHub issue open or closed.",
+  "description": "Move the item to another status: a Jira issue through the transition picked among those Jira offers it now (two may lead to the same status; each with the fields it asks for, such as Effort); a GitHub issue open or closed, or to another status of a GitHub project it is in; a pull request in a project to another status of that project. The options are grouped by project.",
   "appliesTo": {
-    "kind": "ticket"
+    "any": [
+      {
+        "kind": "ticket"
+      },
+      {
+        "all": [
+          {
+            "kind": "pr"
+          },
+          {
+            "field": "projects",
+            "exists": true
+          }
+        ]
+      }
+    ]
   },
   "form": [
     {
@@ -19,8 +34,15 @@
   "mnemonic": "t",
   "primary": {
     "when": {
-      "field": "statusCategory",
-      "not": "done"
+      "all": [
+        {
+          "kind": "ticket"
+        },
+        {
+          "field": "statusCategory",
+          "not": "done"
+        }
+      ]
     },
     "rank": 40
   },

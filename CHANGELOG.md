@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.7.0 (unreleased)
+
+- `transition` **moves a GitHub item's project status** (Wei 2026-10-22): an issue or a pull request in a GitHub
+  project moves to another status of that project. `optionsFrom: transitions` groups its options: the issue's own
+  move (open or closed) under `Issue`, then each project's statuses under the project's title (an option's `group`:
+  `{ key: "issue" | "project:<owner>/<number>", label }`), the current status greyed. A project move's value is
+  `project:<project id>:<option id>`, passed as `transitionId`; the plane sets the status field the user picked for
+  that project (else `Status`) and needs the connection's `project` scope (Projects write, fine-grained).
+- `transition` applies to **pull requests in a project**: `appliesTo` `{ any: [ { kind: ticket }, { all: [ { kind:
+  pr }, { field: projects, exists: true } ] } ] }`; a pull request moves between project statuses only (merge and
+  close are their own actions), and `transition` is primary on tickets only (`primary.when` adds `kind: ticket`).
+- Schema v0.7.0 documents the view condition fields `projects`, `projectStatus` and `projectStatusCategory`, the
+  project move, and grouped options. v0.1.0-v0.6.x manifests stay valid.
+- Needs an office-cockpit plane 0.4.0; tag after it is deployed (an older plane cannot move project status and lists
+  no project options).
+
 ## v0.6.3 (unreleased)
 
 - `resolve-conflict` requires **occ >=0.7.1** (was >=0.4.0). From occ 0.7.1 every session cockpit starts runs in the

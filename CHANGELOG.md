@@ -1,6 +1,50 @@
 # Changelog
 
-## v0.6.3 (unreleased)
+## v0.7.0 (unreleased)
+
+Needs office-cockpit plane 0.4.0 and occ 0.7.3; tag after it is deployed.
+
+### Action locks
+
+- Schema v0.7.0: **`lock`** (office-cockpit plane 0.4.0, occ 0.7.3; Wei 2026-10-22). An action may declare
+  `"lock": "<class>"` (1-32 of `a-z0-9-`): a run holds that class on its item, and office-cockpit lets at most one run
+  hold it at once, whoever started it (two users' runs on one pull request too). `pr-branch`: the action commits or
+  pushes to the pull request's branch. A run started by hand (the drawer, ⌘K, `occ items run`, a question card's Run)
+  while it is held is refused (`409 LOCKED`, saying what holds it); a trigger's run waits and starts once it frees, if
+  its condition still holds. `occ lock <item>` takes it from a session of your own. Read-only actions declare none;
+  v0.1.0-v0.6.x manifests stay valid.
+- `resolve-conflict` declares `lock: "pr-branch"`, and refuses to clobber the branch (prompt `resolve-conflict/4`):
+  the script reads the pull request's head commit from GitHub (`headRefOid`, with the fork check) and the prompt has
+  the agent work from it only. When origin's branch is anywhere else at the start or right before the push, it pushes
+  nothing and ends with "the pull request changed while it was being resolved; run it again". A merge pushes with a
+  plain `git push origin HEAD:<head>` once `git merge-base --is-ancestor <that commit> HEAD` holds: the merge builds on
+  that commit, so the push is a fast-forward, which git refuses when someone pushed meanwhile (never a force push). A
+  rebase, which rewrites the branch, pushes with `git push --force-with-lease=<head>:<that commit> origin HEAD:<head>`,
+  once the rebased branch is checked to sit on the base (`git merge-base --is-ancestor origin/<base> HEAD`).
+- `resolve-conflict` requires **occ >=0.7.3** (an older occ refuses a manifest with `lock`). This folds in v0.6.3,
+  whose only change raised the requirement to >=0.7.1 (sessions start in the background); v0.7.0 raises it again. The
+  other actions declare no lock: approve, force-approve, merge, mark-draft, mark-ready, transition and
+  retry-failed-actions change no branch.
+- **A minor release, not a patch**: an office-cockpit plane before 0.4.0 refuses the `lock` key (it reads manifests
+  strictly) and would list `resolve-conflict` with its error, so a plane on `^0.6` must not pick this up by itself.
+  Move the plane's ref to `^0.7` once it runs 0.4.0; nodes: `occ actions add kairelio-hq/cockpit-actions@^0.7`.
+
+### GitHub project status
+
+- `transition` **moves a GitHub item's project status** (Wei 2026-10-22): an issue or a pull request in a GitHub
+  project moves to another status of that project. `optionsFrom: transitions` groups its options: the issue's own
+  move (open or closed) under `Issue`, then each project's statuses under the project's title (an option's `group`:
+  `{ key: "issue" | "project:<owner>/<number>", label }`), the current status greyed. A project move's value is
+  `project:<project id>:<option id>`, passed as `transitionId`; the plane sets the status field the user picked for
+  that project (else `Status`) and needs the connection's `project` scope (Projects write, fine-grained).
+- `transition` applies to **pull requests in a project**: `appliesTo` `{ any: [ { kind: ticket }, { all: [ { kind:
+  pr }, { field: projects, exists: true } ] } ] }`; a pull request moves between project statuses only (merge and
+  close are their own actions), and `transition` is primary on tickets only (`primary.when` adds `kind: ticket`).
+- Schema v0.7.0 documents the view condition fields `projects`, `projectStatus` and `projectStatusCategory`, the
+  project move, and grouped options. v0.1.0-v0.6.x manifests stay valid.
+- An older plane cannot move project status and lists no project options.
+
+## v0.6.3 (folded into v0.7.0)
 
 - `resolve-conflict` requires **occ >=0.7.1** (was >=0.4.0). From occ 0.7.1 every session cockpit starts runs in the
   background (`claude --bg` or the Codex daemon), named `occ-…`, and comes to a herdr/tmux tab or the Claude app only

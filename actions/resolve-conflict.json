@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.6.0/schema/manifest.schema.json",
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.7.0/schema/manifest.schema.json",
   "id": "resolve-conflict",
   "title": "(agent) Resolve conflict",
   "group": "agent",
@@ -66,10 +66,11 @@
     }
   ],
   "mnemonic": "C",
+  "lock": "pr-branch",
   "executor": "node",
   "script": {
     "path": "scripts/resolve-conflict.js",
-    "sha256": "43323bc07b19e85fd133ab47ef1edde70d17e6e5638132b67bdc8602278bb7fd"
+    "sha256": "249be0f417669ba93dc5c2b5b6bb065de4b9886eb8e5948c362f37f78e23e885"
   },
   "permissions": [
     "github.read",
@@ -78,7 +79,7 @@
     "github.write"
   ],
   "requires": {
-    "occ": ">=0.7.1",
+    "occ": ">=0.7.3",
     "ctx": 1,
     "tools": [
       "gh"

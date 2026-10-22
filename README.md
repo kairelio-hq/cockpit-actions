@@ -96,6 +96,11 @@ transitionId"). That plane also takes the id as `to`, so v0.6.0's `to: "{form.st
   plane from 2026-10-20 on (every plane that reads v0.6.0's `agents` has it); an older one lists `approve` with its
   error.
 
+- v0.7.0: `lock` (`"pr-branch"`): a run holds that class on its item and office-cockpit lets one run hold it at a
+  time; started by hand while held it is refused (`409 LOCKED`), a trigger's run waits for it. Read-only actions
+  declare none. Needs an office-cockpit plane from 0.4.0 and occ 0.7.3; an older plane lists the manifest with its
+  error, so `lock` came in a minor release.
+
 ### GitHub project status (schema v0.7.0)
 
 `transition` moves a GitHub issue or pull request to another status of a GitHub project it is in. `optionsFrom:
@@ -109,9 +114,13 @@ Settings, else `Status`) with GitHub's `updateProjectV2ItemFieldValue`. The conn
 `appliesTo` lists `transition` on one in a project (`projects exists`), and it is never primary there. View condition
 fields since v0.7.0: `projects`, `projectStatus`, `projectStatusCategory`. Needs an office-cockpit plane 0.4.0.
 
-`resolve-conflict` is this library's first node action. Its prompt is versioned in the script (`PROMPT_VERSION`,
-now `resolve-conflict/3`) and takes the strategy: `merge` (a merge commit and a plain push; the default) or `rebase`
-(rewrites the PR's history; `git push --force-with-lease` to the PR's branch only, never a bare `--force`). The agent
+`resolve-conflict` is this library's first node action, and holds the `pr-branch` lock (v0.7.0). Its prompt is versioned
+in the script (`PROMPT_VERSION`, now `resolve-conflict/4`) and takes the strategy: `merge` (a merge commit; the
+default) or `rebase` (rewrites the PR's history), and the head commit GitHub gave when the run started: the agent works
+from it only, pushes nothing when origin's branch moved ("the pull request changed while it was being resolved; run it
+again"), and pushes to the PR's branch only: a merge with a plain `git push origin HEAD:<head>` (a fast-forward,
+refused when someone pushed meanwhile), a rebase with `git push --force-with-lease=<head>:<that commit>` once the
+rebased branch sits on the base; never a bare `--force`. The agent
 creates the worktree and removes it (`git worktree remove`, `git worktree prune`, and its temporary branch) once the
 push went; when it stops to ask, it keeps the worktree, says where it is, and removes it once done after the answer.
 

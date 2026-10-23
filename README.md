@@ -14,7 +14,7 @@ manifest names where it applies, an optional form, and steps made of the plane's
 | `transition` | moves an item to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason), a GitHub issue or pull request to another status of a project it is in (options grouped by project) | Jira and GitHub issues (primary while not done); pull requests in a GitHub project | `t` |
 | `retry-failed-actions` | re-runs the failed jobs of the GitHub Actions runs that failed on the head commit (the latest run of each workflow); the confirmation lists them; other apps' checks are named as skipped. The connection needs Actions write (a classic token: `repo`) | open PRs whose checks fail (primary when yours, below approve and merge) | `R` |
 | `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork, or when it cannot tell (it fails closed) | `C` |
-| `llm` | **Ask an LLM**, a node action: `claude -p` on your node with your prompt and, if you pick one, the item's body or the pull request's diff as context (the diff cut at 100 KiB); the answer is its `text` output, for a workflow's next step, and its first 200 characters the message. `model` picks a model the node lists for Claude (`occ models add claude <model>`), else Claude's default. Prefers a node labelled `generic` (`runsOn: generic:claude`). Writes nothing. Needs occ 0.8.0 | pull requests and tickets (body: GitHub issues and pull requests; diff: pull requests) | |
+| `llm` | **Ask an LLM**, a node action: `claude -p` on your node, with no tools (no shell, files, MCP servers, hooks or user settings; occ's `agent.run` `tools: "none"`, in an empty directory), with your prompt and, if you pick one, the item's body or the pull request's diff as context (the diff cut at 100 KiB); the answer is its `text` output, for a workflow's next step, and its first 200 characters the message. `model` picks a model the node lists for Claude (`occ models add claude <model>`), else Claude's default. Prefers a node labelled `generic` (`runsOn: generic:claude`). Writes nothing. Needs occ 0.8.0 | pull requests and tickets (body: GitHub issues and pull requests; diff: pull requests) | |
 
 ## Using it
 
@@ -142,7 +142,12 @@ Needs an office-cockpit plane 0.6.0 and occ 0.8.0 (`requires.occ: ">=0.8.0"`); `
   be one of the action's `agents`.
 
 `llm` is the first action using them: item-bound (`appliesTo` a pull request or a ticket, so the body or diff can be
-read), with the output `text` and `runsOn: ["generic:claude"]`. It declares no `requires.github: "item"`: that would
+read), with the output `text` and `runsOn: ["generic:claude"]`. **Its context is untrusted**: anyone who can open a
+pull request writes its body and diff, so `llm` runs Claude with `tools: "none"` (it can only answer: no shell, no
+files, no MCP server, no hook) and puts the context between tags made fresh for each run (`<untrusted-<16 hex>>`,
+after a line saying it is data, never instructions; anything shaped like such a tag in it is defused). The answer is
+still shaped by that text: **treat `text` as untrusted** in a workflow: never post it, merge on it or feed it to an
+agent with tools without a person reviewing it (a `cockpit/task` first). It declares no `requires.github: "item"`: that would
 refuse every node for a Jira ticket; `context: diff` reads GitHub with the node's own `gh`.
 
 ## Checking a release

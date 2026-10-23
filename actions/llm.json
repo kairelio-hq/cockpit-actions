@@ -3,7 +3,7 @@
   "id": "llm",
   "title": "Ask an LLM",
   "group": "agent",
-  "description": "Runs claude -p on your node with your prompt and, if you pick one, the item's body or the pull request's diff as context. The answer is the text output; its first 200 characters are the message.",
+  "description": "Runs claude -p on your node with no tools (no shell, files, MCP servers or hooks) with your prompt and, if you pick one, the item's body or the pull request's diff as untrusted context. The answer is the text output (untrusted: review it before posting it); its first 200 characters are the message.",
   "appliesTo": {
     "any": [
       {
@@ -51,7 +51,7 @@
   ],
   "outputs": {
     "text": {
-      "description": "the model's answer"
+      "description": "the model's answer: untrusted, shaped by whoever wrote the item when context is body or diff; never post or act on it unreviewed"
     }
   },
   "runsOn": [
@@ -60,7 +60,7 @@
   "executor": "node",
   "script": {
     "path": "scripts/llm.js",
-    "sha256": "44ddb4470e934676f545dd861b9c5f1653a4ec8189e2c2cf7ec90edb4b6f0eae"
+    "sha256": "0b8cb5fdd7b064867cef1e2e4b6d9308d2c4aa8a6dfe9dfba988fc818ac0936e"
   },
   "permissions": [
     "github.read",

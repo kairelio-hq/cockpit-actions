@@ -1,0 +1,78 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.8.0/schema/manifest.schema.json",
+  "id": "llm",
+  "title": "Ask an LLM",
+  "group": "agent",
+  "description": "Runs claude -p on your node with your prompt and, if you pick one, the item's body or the pull request's diff as context. The answer is the text output; its first 200 characters are the message.",
+  "appliesTo": {
+    "any": [
+      {
+        "kind": "pr"
+      },
+      {
+        "kind": "ticket"
+      }
+    ]
+  },
+  "form": [
+    {
+      "key": "prompt",
+      "label": "Prompt",
+      "kind": "text",
+      "required": true
+    },
+    {
+      "key": "context",
+      "label": "Context",
+      "kind": "select",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "body",
+          "label": "The item's body"
+        },
+        {
+          "value": "diff",
+          "label": "The pull request's diff"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "key": "model",
+      "label": "Model",
+      "kind": "text",
+      "placeholder": "the node's default",
+      "help": "A model listed for Claude on the node (occ models add claude <model>); empty: Claude's default."
+    }
+  ],
+  "outputs": {
+    "text": {
+      "description": "the model's answer"
+    }
+  },
+  "runsOn": [
+    "generic:claude"
+  ],
+  "executor": "node",
+  "script": {
+    "path": "scripts/llm.js",
+    "sha256": "44ddb4470e934676f545dd861b9c5f1653a4ec8189e2c2cf7ec90edb4b6f0eae"
+  },
+  "permissions": [
+    "github.read",
+    "agent.run"
+  ],
+  "requires": {
+    "occ": ">=0.8.0",
+    "ctx": 1,
+    "checkout": "none"
+  },
+  "timeoutSeconds": 600,
+  "agents": [
+    "claude"
+  ]
+}

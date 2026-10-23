@@ -122,6 +122,9 @@ export function promptWith(prompt, kind, extra, tag = freshTag()) {
 }
 
 export async function handle(ctx) {
+  // An occ before 0.8.0 ignores `tools: "none"` and would hand the untrusted context to Claude with
+  // its full tools: refuse there (ctx.output came with 0.8.0), before reading any context.
+  if (typeof ctx.output !== "function") throw new Error("llm needs occ >= 0.8.0");
   const { prompt, model } = ctx.form;
   // A field left out comes as "" (the answers as checked: an empty select is ""): the default, then.
   const context = ctx.form.context || "none";

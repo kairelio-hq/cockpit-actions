@@ -23,7 +23,8 @@ Needs office-cockpit plane 0.6.0 and occ 0.8.0; tag after both are deployed and 
   refused until the plane sends bodies) or the pull request's diff (built from its changed files' patches, cut at
   100 KiB and within agent.run's 100 KiB prompt). `model` (optional) picks a model the node lists for Claude. The
   answer is the output `text`; its first 200 characters are the message. Applies to pull requests and tickets;
-  `runsOn: ["generic:claude"]`; permissions `github.read`, `agent.run`; `requires: { occ: ">=0.8.0", ctx: 1,
+  `runsOn: ["generic:claude", "default:claude"]` (a `generic` node first, else one with no labels, so a workflow step
+  using it is not refused on an install whose nodes have none); permissions `github.read`, `agent.run`; `requires: { occ: ">=0.8.0", ctx: 1,
   checkout: none }`; 600 s.
 - **`llm` treats its context as untrusted** (security review, 2026-10-24): a pull request's body or diff is written
   by its author, so Claude runs with `ctx.agent.run(prompt, { tools: "none" })` (occ 0.8.0: no tool, MCP server,
@@ -31,6 +32,9 @@ Needs office-cockpit plane 0.6.0 and occ 0.8.0; tag after both are deployed and 
   context sits between per-run random tags (`<untrusted-<16 hex>>`) after a line saying it is data, never
   instructions; a tag-shaped string in it is defused. The `text` output is still influenced by the item's author:
   never post it or act on it unreviewed.
+- **`tools: "none"` needs occ 0.8.0**: an older occ ignores the option and would run the agent with its full tools, so
+  an action using it must declare `requires.occ: ">=0.8.0"` (README). `llm` declares it, and its script refuses on an
+  occ without `ctx.output` ("llm needs occ >= 0.8.0").
 - **A minor release, not a patch**: a plane before 0.6.0 refuses the new keys and lists `llm` with its error, and occ
   before 0.8.0 lacks `ctx.output` and `--model`. Move the plane's ref to `^0.8` once it runs 0.6.0; nodes: `occ actions
   add kairelio-hq/cockpit-actions@^0.8` (they ask once for `agent.run` for `llm`).

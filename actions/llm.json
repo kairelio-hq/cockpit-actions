@@ -55,12 +55,13 @@
     }
   },
   "runsOn": [
-    "generic:claude"
+    "generic:claude",
+    "default:claude"
   ],
   "executor": "node",
   "script": {
     "path": "scripts/llm.js",
-    "sha256": "0b8cb5fdd7b064867cef1e2e4b6d9308d2c4aa8a6dfe9dfba988fc818ac0936e"
+    "sha256": "081bb082d153203fd8032a0a338799745a06b4c8c6bc461751f117b619ea805c"
   },
   "permissions": [
     "github.read",

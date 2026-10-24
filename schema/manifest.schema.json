@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.7.0/schema/manifest.schema.json",
-  "title": "office-cockpit action manifest (occ-actions/1, schema v0.7.0)",
-  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors. Since v0.2.0 an action may run on one of the user's nodes (executor: node): one ES module under scripts/ run in QuickJS with ctx v1, its SHA-256 in the manifest; such an action has no steps. A manifest without executor is a plane action, exactly as in v0.1.0. Since v0.3.0 operations are provider-neutral and run on the item's connector: transition { to, fields? } moves a Jira issue through its workflow or opens and closes a GitHub issue, and optionsFrom: transitions lists where the item can move now with the fields each move asks for (a run answers them in form.fields, so fields is not a form key). jira-transition and jira-transitions are their deprecated v0.1.0 names, still valid. Since v0.4.0: the rerun-failed-checks operation (re-runs the failed jobs of the GitHub Actions runs that failed on a pull request's head commit; preparing it lists the runs), unavailableWhen (rules that grey an applicable action out with a reason, such as a pull request from a fork), and the view condition fields checks, mergeable and fork. Since v0.6.1: transition { transitionId } takes the move a form of optionsFrom: transitions picked (an option's value is the move's id: a Jira transition id, a GitHub issue's open or closed), since two Jira transitions may lead to the same status; transition { to } still names a status and is refused as ambiguous when two transitions lead there. Since v0.6.2 (documented; the plane has read it since 2026-10-20): the view condition fields reviewStatus (requested, approved, approved-ready, chg-req, commented) and reviewStatus.tone (mine, mine-ready, settled, theirs), the viewer's own review of a pull request, computed for the user the action is listed for. Since v0.7.0: lock (a lock class a run holds on its item, such as pr-branch); the view condition fields projects, projectStatus and projectStatusCategory; transition moves a GitHub item's project Status (transitionId project:<project id>:<option id>), on issues and pull requests in a project, and optionsFrom: transitions groups options by project. Earlier manifests stay valid.",
+  "$id": "https://raw.githubusercontent.com/kairelio-hq/cockpit-actions/v0.8.0/schema/manifest.schema.json",
+  "title": "office-cockpit action manifest (occ-actions/1, schema v0.8.0)",
+  "description": "One action of an action library: actions/<id>.json. Strings in step parameters may hold placeholders: {form.<key>}, {item.id|ref|key|number|repository|title|url|branch}, {me.email|name}; {{ and }} are literal braces. The plane validates more than this schema can say (conditions, placeholders, if): a manifest it refuses is listed with its errors. Since v0.2.0 an action may run on one of the user's nodes (executor: node): one ES module under scripts/ run in QuickJS with ctx v1, its SHA-256 in the manifest; such an action has no steps. A manifest without executor is a plane action, exactly as in v0.1.0. Since v0.3.0 operations are provider-neutral and run on the item's connector: transition { to, fields? } moves a Jira issue through its workflow or opens and closes a GitHub issue, and optionsFrom: transitions lists where the item can move now with the fields each move asks for (a run answers them in form.fields, so fields is not a form key). jira-transition and jira-transitions are their deprecated v0.1.0 names, still valid. Since v0.4.0: the rerun-failed-checks operation (re-runs the failed jobs of the GitHub Actions runs that failed on a pull request's head commit; preparing it lists the runs), unavailableWhen (rules that grey an applicable action out with a reason, such as a pull request from a fork), and the view condition fields checks, mergeable and fork. Since v0.6.1: transition { transitionId } takes the move a form of optionsFrom: transitions picked (an option's value is the move's id: a Jira transition id, a GitHub issue's open or closed), since two Jira transitions may lead to the same status; transition { to } still names a status and is refused as ambiguous when two transitions lead there. Since v0.6.2 (documented; the plane has read it since 2026-10-20): the view condition fields reviewStatus (requested, approved, approved-ready, chg-req, commented) and reviewStatus.tone (mine, mine-ready, settled, theirs), the viewer's own review of a pull request, computed for the user the action is listed for. Since v0.7.0: lock (a lock class a run holds on its item, such as pr-branch); the view condition fields projects, projectStatus and projectStatusCategory; transition moves a GitHub item's project Status (transitionId project:<project id>:<option id>), on issues and pull requests in a project, and optionsFrom: transitions groups options by project. Since v0.8.0 (needs occ >=0.8.0; ctx stays version 1): outputs (at most 16 by id, ids as form keys; a script sets them with ctx.output(id, value), JSON values, at most 256 KiB in all), runsOn (1-8 node selectors <label>:<agent>[:<model>] in preference order, or a label alone for an action that uses no agent), appliesTo { none: true } (an item-less action: ctx.item is null, never offered in an item menu, requires.checkout none), and the event.emit permission (ctx.emit(name, payload)). Earlier manifests stay valid.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -37,9 +37,37 @@
       "maxLength": 500
     },
     "appliesTo": {
-      "description": "A view condition (office-cockpit contract views.md, Conditions): { all: [...] }, { any: [...] }, { not: c }, { kind: pr|ticket }, or { field, <operator>: value }. The plane checks fields and operators.",
-      "type": "object",
-      "minProperties": 1
+      "description": "A view condition (office-cockpit contract views.md, Conditions): { all: [...] }, { any: [...] }, { not: c }, { kind: pr|ticket }, or { field, <operator>: value }. The plane checks fields and operators. Since v0.8.0, { none: true }: the action runs without an item (from a workflow or the Run button); requires.checkout is then none.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "none": {
+              "const": true
+            }
+          },
+          "required": [
+            "none"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "not": {
+            "type": "object",
+            "properties": {
+              "none": {
+                "const": true
+              }
+            },
+            "required": [
+              "none"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
     },
     "variables": {
       "description": "Schema v0.5.0: library variables this action uses, kept per user and space on the plane and set in Settings → Actions → <library> → Variables. A library's actions share them: two manifests declaring one id declare it the same way; at most 20 a library. Values are not secrets.",
@@ -724,7 +752,8 @@
           "github.write",
           "git.checkout",
           "agent.start",
-          "agent.run"
+          "agent.run",
+          "event.emit"
         ]
       },
       "description": "The ctx capabilities the script may call; a node asks its owner before new ones run."
@@ -889,6 +918,37 @@
           }
         }
       ]
+    },
+    "outputs": {
+      "description": "Schema v0.8.0: what a run returns beside its message, by id; the script sets each with ctx.output(id, value). A node action's only.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 16,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]{0,39}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "runsOn": {
+      "description": "Schema v0.8.0: the nodes it prefers, in order: <label>:<agent>[:<model>] (code-review:claude, generic:claude:haiku-5), or a label alone for an action that uses no agent. A job's runs-on wins over it. Labels place work only: they never grant trust or permissions. A node action's only.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,31}(:(claude|codex)(:[a-z0-9][a-z0-9.-]{0,47})?)?$"
+      }
     }
   },
   "if": {

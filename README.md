@@ -14,6 +14,7 @@ manifest names where it applies, an optional form, and steps made of the plane's
 | `transition` | moves an item to a state it can reach now: a Jira issue through its workflow (a form of Jira's transitions, with the fields the move asks for, such as Effort), a GitHub issue open or closed (with a reason), a GitHub issue or pull request to another status of a project it is in (options grouped by project) | Jira and GitHub issues (primary while not done); pull requests in a GitHub project | `t` |
 | `retry-failed-actions` | re-runs the failed jobs of the GitHub Actions runs that failed on the head commit (the latest run of each workflow); the confirmation lists them; other apps' checks are named as skipped. The connection needs Actions write (a classic token: `repo`) | open PRs whose checks fail (primary when yours, below approve and merge) | `R` |
 | `resolve-conflict` | **(agent) Resolve conflict**, a node action: a Claude session on your node merges the base into the branch (or, if you pick it, rebases onto the base and force-pushes with lease) in a worktree of its own, resolves the conflicts keeping both sides' intent, runs the tests it finds, pushes to the PR's branch, removes the worktree, and comments a summary; it stops and asks when a conflict needs a decision or the tests fail | open PRs with a merge conflict, on a node with a checkout of the repository; greyed for a PR from a fork, or when it cannot tell (it fails closed) | `C` |
+| `llm` | **Ask an LLM**, a node action: `claude -p` on your node, with no tools (no shell, files, MCP servers, hooks or user settings; occ's `agent.run` `tools: "none"`, in an empty directory), with your prompt and, if you pick one, the item's body or the pull request's diff as context (the diff cut at 100 KiB); the answer is its `text` output, for a workflow's next step, and its first 200 characters the message. `model` picks a model the node lists for Claude (`occ models add claude <model>`), else Claude's default. Prefers a node labelled `generic`, then one labelled `default` or none (`runsOn: generic:claude, default:claude`). Writes nothing. Needs occ 0.8.0 | pull requests and tickets (body: GitHub issues and pull requests; diff: pull requests) | |
 
 ## Using it
 
@@ -46,7 +47,7 @@ occ actions libraries enable kairelio-hq/cockpit-actions --space=<space>
 An action may run on one of the user's nodes instead of the plane: `executor: "node"`, a `script`
 (`{ "path": "scripts/<id>.js", "sha256": "<64 hex>" }`, one ES module exporting `handle(ctx)`, at most 256 KiB),
 `permissions` (the `ctx` calls it may make: `github.read`, `github.write`, `git.checkout`, `agent.start`,
-`agent.run`), `requires` (`occ`, `ctx`, `tools`, `skills`, `mcp`, `checkout`, `github`) and `timeoutSeconds`; no
+`agent.run`; since v0.8.0 `event.emit`), `requires` (`occ`, `ctx`, `tools`, `skills`, `mcp`, `checkout`, `github`) and `timeoutSeconds`; no
 `steps`. The plane never runs the script; a node fetches it at the pinned commit with its own `gh`, checks the
 hash, and runs it only if it trusts the library (`occ actions add <owner/repo>[@<range>]` on that node). Keep the
 hash current with `occ actions hash . --write`. A manifest without `executor` is a v0.1.0 plane action, unchanged.
@@ -113,6 +114,62 @@ Settings, else `Status`) with GitHub's `updateProjectV2ItemFieldValue`. The conn
 (classic tokens and OAuth) or Projects write (fine-grained). A pull request moves between project statuses only:
 `appliesTo` lists `transition` on one in a project (`projects exists`), and it is never primary there. View condition
 fields since v0.7.0: `projects`, `projectStatus`, `projectStatusCategory`. Needs an office-cockpit plane 0.4.0.
+
+### Workflows: outputs, item-less actions, runsOn (schema v0.8.0)
+
+Needs an office-cockpit plane 0.6.0 and occ 0.8.0 (`requires.occ: ">=0.8.0"`); `ctx` stays version 1. A plane before
+0.6.0 lists a manifest using these keys with its errors, so they came in a minor release.
+
+- **`outputs`**: what a node action returns beside its message, for a workflow's next step
+  (`${{ steps.<id>.outputs.<output> }}`): at most 16, by id (`^[a-z][a-z0-9_]{0,39}$`, the same ids as form keys),
+  each with an optional `description`. The script sets one with **`ctx.output(id, value)`**: any JSON value, at most
+  256 KiB of outputs in all; an id the manifest does not declare is an error. The message (what `handle` returns) is
+  unchanged, at most 2000 characters.
+- **`ctx.emit(name, payload)`**, with the new permission **`event.emit`**: posts an event to the plane (signed by the
+  node, at most 20 a run) that an event trigger can start a workflow on. It answers once the plane took it; occ
+  retries in the background (3 times: 1 s, 5 s, 15 s) and then logs and drops it. A node asks once for `event.emit`
+  when a library adds it.
+- **Item-less actions**: `appliesTo: { "none": true }` (exactly that). The action runs without an item, from a
+  workflow or the Run button: `ctx.item` is null, it is never offered in an item menu (run from an item, it is refused,
+  "this action runs without an item: start it from a workflow"). It must be a node action with
+  `requires.checkout: none`, no `requires.github`, and none of `lock`, `primary`, `unavailableWhen`, `optionsFrom` or
+  `prefill`.
+- **`runsOn`**: the nodes it prefers, 1-8 selectors in order: `<label>:<agent>[:<model>]` (`generic:claude`,
+  `code-review:claude:haiku-5`), or a label alone for an action that uses no agent. A node has the labels its owner set
+  (`occ labels add <label>`; one reporting none counts as `default`) and the models listed per agent (`occ models add
+  claude <model>`). A workflow job's `runs-on` wins over it; run by hand, matching nodes rank first and nothing is
+  refused for labels. Labels only place work: they never grant trust or permissions. Every agent a selector names must
+  be one of the action's `agents`.
+
+`llm` is the first action using them: item-bound (`appliesTo` a pull request or a ticket, so the body or diff can be
+read), with the output `text` and `runsOn: ["generic:claude", "default:claude"]` (a node labelled `generic`, else any node
+with no labels, so a workflow step using it runs on an install whose nodes have none). **Its context is untrusted**: anyone who can open a
+pull request writes its body and diff, so `llm` runs Claude with `tools: "none"` (it can only answer: no shell, no
+files, no MCP server, no hook) and puts the context between tags made fresh for each run (`<untrusted-<16 hex>>`,
+after a line saying it is data, never instructions; anything shaped like such a tag in it is defused). The answer is
+still shaped by that text: **treat `text` as untrusted** in a workflow: never post it, merge on it or feed it to an
+agent with tools without a person reviewing it (a `cockpit/task` first). It declares no `requires.github: "item"`: that would
+refuse every node for a Jira ticket; `context: diff` reads GitHub with the node's own `gh`.
+
+**An action that calls `ctx.agent.run(prompt, { tools: "none" })` must declare `requires.occ: ">=0.8.0"`.** occ before
+0.8.0 ignores options it does not know, so on an older node the agent would run with the owner's full tools, MCP
+servers and hooks in the node's home directory: exactly what `tools: "none"` exists to prevent. `llm` declares it, and
+its script also refuses to run on an occ without `ctx.output` ("llm needs occ >= 0.8.0").
+
+## Checking a release
+
+Before tagging, from the repository's root:
+
+```sh
+# every manifest against the schema (JSON Schema 2020-12), and the index
+bunx ajv-cli@5.0.0 validate -s schema/manifest.schema.json -d "actions/*.json" --spec=draft2020
+bunx ajv-cli@5.0.0 validate -s schema/index.schema.json -d index.json --spec=draft2020
+# the scripts' hashes in their manifests (an occ at least as new as the schema's requires.occ)
+occ actions hash . --write
+```
+
+The office-cockpit repository mirrors each release in `conformance/fixtures/actions/cockpit-actions-v<version>` and
+runs its conformance tests against it.
 
 `resolve-conflict` is this library's first node action, and holds the `pr-branch` lock (v0.7.0). Its prompt is versioned
 in the script (`PROMPT_VERSION`, now `resolve-conflict/4`) and takes the strategy: `merge` (a merge commit; the

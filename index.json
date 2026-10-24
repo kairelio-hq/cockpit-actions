@@ -9,6 +9,7 @@
     "mark-ready",
     "transition",
     "retry-failed-actions",
-    "resolve-conflict"
+    "resolve-conflict",
+    "llm"
   ]
 }

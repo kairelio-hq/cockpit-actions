@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.8.0 (unreleased)
+
+Needs office-cockpit plane 0.6.0 and occ 0.8.0; tag after both are deployed and nodes upgraded.
+
+### Schema v0.8.0: workflows
+
+- **`outputs`** (at most 16, by id, ids as form keys): what a node action returns beside its message, for a
+  workflow's next step. A script sets one with `ctx.output(id, value)`: JSON values, at most 256 KiB in all; an
+  undeclared id is an error. The message is unchanged (at most 2000 characters).
+- **`runsOn`**: 1-8 node selectors `<label>:<agent>[:<model>]` in preference order, or a label alone for an action
+  that uses no agent. A workflow job's `runs-on` wins over it; labels never grant trust or permissions.
+- **`appliesTo: { "none": true }`**: an item-less action (`ctx.item` null, never in an item menu,
+  `requires.checkout: none`).
+- The permission **`event.emit`** (`ctx.emit(name, payload)`): an event for the plane's event triggers.
+- `ctx` stays version 1; a manifest using these keys requires `occ >=0.8.0`. Earlier manifests stay valid.
+
+### Ask an LLM
+
+- New node action **`llm`** ("Ask an LLM", group `agent`): `claude -p` on the node with the form's `prompt` and, as
+  `context`, nothing, the item's body (a GitHub issue's or pull request's, read from GitHub; a Jira ticket's is
+  refused until the plane sends bodies) or the pull request's diff (built from its changed files' patches, cut at
+  100 KiB and within agent.run's 100 KiB prompt). `model` (optional) picks a model the node lists for Claude. The
+  answer is the output `text`; its first 200 characters are the message. Applies to pull requests and tickets;
+  `runsOn: ["generic:claude", "default:claude"]` (a `generic` node first, else one with no labels, so a workflow step
+  using it is not refused on an install whose nodes have none); permissions `github.read`, `agent.run`; `requires: { occ: ">=0.8.0", ctx: 1,
+  checkout: none }`; 600 s.
+- **`llm` treats its context as untrusted** (security review, 2026-10-24): a pull request's body or diff is written
+  by its author, so Claude runs with `ctx.agent.run(prompt, { tools: "none" })` (occ 0.8.0: no tool, MCP server,
+  skill, hook or user setting, in an empty directory of its own, whatever the owner's permission mode), and the
+  context sits between per-run random tags (`<untrusted-<16 hex>>`) after a line saying it is data, never
+  instructions; a tag-shaped string in it is defused. The `text` output is still influenced by the item's author:
+  never post it or act on it unreviewed.
+- **`tools: "none"` needs occ 0.8.0**: an older occ ignores the option and would run the agent with its full tools, so
+  an action using it must declare `requires.occ: ">=0.8.0"` (README). `llm` declares it, and its script refuses on an
+  occ without `ctx.output` ("llm needs occ >= 0.8.0").
+- **A minor release, not a patch**: a plane before 0.6.0 refuses the new keys and lists `llm` with its error, and occ
+  before 0.8.0 lacks `ctx.output` and `--model`. Move the plane's ref to `^0.8` once it runs 0.6.0; nodes: `occ actions
+  add kairelio-hq/cockpit-actions@^0.8` (they ask once for `agent.run` for `llm`).
+- README: how to check a release (`ajv-cli` against the schema, `occ actions hash . --write`).
+
 ## v0.7.0 (unreleased)
 
 Needs office-cockpit plane 0.4.0 and occ 0.7.3; tag after it is deployed.
